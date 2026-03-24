@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GTP Room Booking | THAIXON</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/locales-all.global.min.js"></script>
+    <style>
+        :root { --primary-dark: #1a252f; --accent-blue: #34495e; --success-green: #059669; --text-main: #2c3e50; --bg-light: #f4f7f9; }
+        body { font-family: 'Inter', 'Sarabun', sans-serif; background-color: var(--bg-light); color: var(--text-main); font-size: 15px; }
+        h3, h4, h5, .fw-bold { font-weight: 600 !important; letter-spacing: -0.02em; }
+        .form-label { font-weight: 500; color: #576574; font-size: 0.9rem; margin-bottom: 0.4rem; }
+        .login-page { height: 100vh; display: flex; align-items: center; justify-content: center; background: #2c3e50; overflow-y: auto; padding: 2rem 0; }
+        .login-card { border: none; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); width: 100%; max-width: 450px; background: white; padding: 3rem 2.5rem; margin: auto; }
+        #main-wrapper { display: none; }
+        #sidebar-wrapper { min-height: 100vh; width: 280px; background-color: var(--primary-dark); color: white; box-shadow: 4px 0 10px rgba(0,0,0,0.05); }
+        .sidebar-heading { padding: 2rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; }
+        #sidebar-wrapper .list-group-item { background: transparent; color: #a4b0be; border: none; padding: 1.1rem 2rem; font-size: 0.95rem; transition: 0.2s; cursor: pointer;}
+        #sidebar-wrapper .list-group-item:hover, #sidebar-wrapper .list-group-item.active { color: white; background: rgba(255,255,255,0.05); border-left: 5px solid var(--success-green); }
+        #page-content-wrapper { width: 100%; height: 100vh; overflow-y: auto; }
+        .top-nav { background: white; border-bottom: 1px solid #edf2f7; padding: 1rem 2rem; position: sticky; top: 0; z-index: 1000; }
+        .card-custom { border: none; border-radius: 12px; background: white; padding: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-bottom: 1.5rem; }
+        .filter-container { max-height: 500px; overflow-y: auto; border: 1px solid #f1f2f6; border-radius: 8px; padding: 1rem; background: #fff; }
+        #calendar { min-height: 600px; padding: 1.5rem; }
+        .table { font-size: 0.95rem; }
+        .table thead th { background: #f8f9fa; color: #576574; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; padding: 1rem; }
+        .table td { padding: 1rem; vertical-align: middle; }
+        .btn { border-radius: 8px; font-weight: 500; padding: 0.6rem 1.2rem; transition: 0.3s; }
+        .btn-success { background-color: var(--success-green); border: none; }
+        .btn-success:hover { background-color: #047857; transform: translateY(-1px); }
+        .view-section { display: none; }
+        .view-section.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .color-legend { display: flex; align-items: center; font-size: 0.85rem; color: #7f8c8d; }
+        .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+
+        /* ========================================================
+           Custom Event Layout & Colors
+           ======================================================== */
+        .fc-event {
+            height: auto !important; 
+            margin-bottom: 4px !important;
+            border: none !important;
+            opacity: 1 !important; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+        .custom-event-content {
+            padding: 5px 6px;
+            color: #ffffff; /* ตัวหนังสือสีขาว */
+            text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.6); /* เงาสีดำใต้ตัวหนังสือ */
+            white-space: normal;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+            line-height: 1.3;
+        }
+        .custom-event-time {
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 3px;
+            color: #ffffff;
+        }
+        .custom-event-room {
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .custom-event-purpose {
+            font-size: 0.75rem;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2; 
+            -webkit-box-orient: vertical;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-section" class="login-page">
+        <div class="login-card">
+            <div class="text-center mb-4"><img src="/Thaixon_logo.jpg" alt="THAIXON" height="50" onerror="this.src='https://via.placeholder.com/150x50?text=THAIXON'"></div>
+            <h5 class="text-center mb-4 fw-bold" id="auth-title" data-i18n="login_title">Meeting Room System</h5>
+            <div class="mb-4 text-center">
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary" onclick="changeLang('th')">TH</button>
+                    <button class="btn btn-outline-secondary" onclick="changeLang('en')">EN</button>
+                    <button class="btn btn-outline-secondary" onclick="changeLang('zh')">繁中</button>
+                </div>
+            </div>
+            <div id="auth-alert" class="alert d-none small"></div>
+
+            <div class="mb-3">
+                <label class="form-label" data-i18n="username">Username (รหัสพนักงาน)</label>
+                <input type="text" id="username" class="form-control">
+            </div>
+            <div class="mb-4">
+                <label class="form-label" data-i18n="password">Password</label>
+                <input type="password" id="password" class="form-control">
+            </div>
+
+            <div id="register-fields" class="d-none">
+                <hr class="mb-4">
+                <div class="mb-3">
+                    <label class="form-label" data-i18n="full_name">ชื่อ-นามสกุล (Full Name)</label>
+                    <input type="text" id="full-name" class="form-control">
+                </div>
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <label class="form-label" data-i18n="department">แผนก (Dept.)</label>
+                        <input type="text" id="department" class="form-control">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label" data-i18n="plant">สาขา (Plant)</label>
+                        <select id="plant" class="form-select">
+                            <option value="GTP1">GTP1</option>
+                            <option value="GTP2">GTP2</option>
+                            <option value="GTP3">GTP3</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="login-buttons">
+                <button class="btn btn-success w-100 py-2 mb-2 fw-bold" onclick="login()" data-i18n="btn_login">Sign In</button>
+                <button class="btn btn-link w-100 text-muted text-decoration-none small" onclick="toggleRegisterView(true)" data-i18n="btn_register">Register Account</button>
+            </div>
+            <div id="register-buttons" class="d-none">
+                <button class="btn btn-primary w-100 py-2 mb-2 fw-bold" onclick="register()" data-i18n="btn_confirm_reg">Confirm Registration</button>
+                <button class="btn btn-link w-100 text-muted text-decoration-none small" onclick="toggleRegisterView(false)" data-i18n="btn_back_login">Back to Login</button>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="main-wrapper">
+        <div id="sidebar-wrapper">
+            <div class="sidebar-heading"><h4 class="mb-0">THA<span>IX</span>ON</h4><small class="opacity-50">Room Booking Portal</small></div>
+            <div class="list-group list-group-flush mt-4">
+                <a class="list-group-item active" id="nav-calendar" onclick="switchView('calendar')"><i class="fas fa-th-large me-3"></i><span data-i18n="menu_calendar">Calendar View</span></a>
+                <a class="list-group-item" id="nav-booking" onclick="switchView('booking')"><i class="fas fa-calendar-plus me-3"></i><span data-i18n="menu_new_booking">New Booking</span></a>
+                <a class="list-group-item" id="nav-history" onclick="switchView('history')"><i class="fas fa-clock-rotate-left me-3"></i><span data-i18n="menu_history">Booking History</span></a>
+                <a class="list-group-item d-none text-info fw-bold" id="nav-admin" onclick="switchView('admin')"><i class="fas fa-shield-halved me-3"></i><span data-i18n="menu_admin">Master Data</span></a>
+            </div>
+        </div>
+
+        <div id="page-content-wrapper">
+            <div class="top-nav">
+                <h5 class="mb-0 d-none d-md-block" data-i18n="app_title">RBS Management</h5>
+                <div class="d-flex align-items-center">
+                    <select class="form-select form-select-sm me-3 border-0 bg-light" onchange="changeLang(this.value)" id="lang-select-main">
+                        <option value="th">ไทย</option><option value="en">English</option><option value="zh">繁體中文</option>
+                    </select>
+                    <div class="dropdown">
+                        <button class="btn btn-light btn-sm dropdown-toggle fw-bold" type="button" data-bs-toggle="dropdown">
+                            <span id="user-display-name">User</span> <span id="user-role-badge" class="badge ms-1"></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg">
+                            <li><a class="dropdown-item py-2 text-danger" href="#" onclick="logout()"><i class="fas fa-power-off me-2"></i><span data-i18n="btn_logout">Logout</span></a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-container">
+                <div id="alert-box" class="alert d-none border-0 shadow-sm"></div>
+
+                <div id="view-calendar" class="view-section active">
+                    <div class="card-custom">
+                        <div class="row align-items-center mb-4">
+                            <div class="col-md-6"><h4 data-i18n="menu_calendar">Calendar View</h4></div>
+                            <div class="col-md-6 d-flex justify-content-md-end">
+                                <div class="color-legend me-4"><span class="color-dot" style="background-color: #059669;"></span><span data-i18n="legend_mine">Mine</span></div>
+                                <div class="color-legend"><span class="color-dot" style="background-color: #475569;"></span><span data-i18n="legend_others">Others</span></div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3"><h6 class="mb-3 text-muted" data-i18n="filter_rooms"><i class="fas fa-filter me-2"></i>Filter Rooms</h6><div id="room-filters" class="filter-container"></div></div>
+                            <div class="col-md-9 border-start"><div id="calendar" class="card-custom p-0"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-booking" class="view-section">
+                    <div class="card-custom mx-auto" style="max-width: 650px;">
+                        <h4 class="mb-4" data-i18n="menu_new_booking">New Booking</h4>
+                        <div class="mb-3"><label class="form-label" data-i18n="select_room">Select Room</label><select id="room-select" class="form-select"></select></div>
+                        <div class="mb-3"><label class="form-label" data-i18n="purpose">Purpose</label><input type="text" id="booking-purpose" class="form-control" placeholder="..." required></div>
+                        <div class="row mb-4">
+                            <div class="col-md-6"><label class="form-label" data-i18n="start_time">Start Time</label><input type="datetime-local" id="start-time" class="form-control"></div>
+                            <div class="col-md-6"><label class="form-label" data-i18n="end_time">End Time</label><input type="datetime-local" id="end-time" class="form-control"></div>
+                        </div>
+                        <button class="btn btn-success w-100 py-3" onclick="bookRoom()"><i class="fas fa-check me-2"></i><span data-i18n="btn_confirm">Confirm Booking</span></button>
+                    </div>
+                </div>
+
+                <div id="view-history" class="view-section">
+                    <div class="card-custom">
+                        <h4 class="mb-4" data-i18n="menu_history">Booking History</h4>
+                        <div class="table-responsive"><table class="table"><thead id="tbl-head-history"></thead><tbody id="bookings-table-body"></tbody></table></div>
+                    </div>
+                </div>
+
+                <div id="view-admin" class="view-section">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card-custom">
+                                <h5 class="mb-4 text-info fw-bold"><i class="fas fa-plus-circle me-2"></i><span data-i18n="admin_add_title">Add New Room</span></h5>
+                                <div class="mb-3"><label class="form-label" data-i18n="admin_room_name">Room Name</label><input type="text" id="new-room-name" class="form-control" placeholder="GTP-X"></div>
+                                <button class="btn btn-info w-100 text-white fw-bold" onclick="addRoom()"><i class="fas fa-save me-2"></i><span data-i18n="admin_btn_save">Save Data</span></button>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card-custom">
+                                <h5 class="mb-4 fw-bold" data-i18n="menu_admin">Master Data Management</h5>
+                                <div class="table-responsive"><table class="table"><thead id="tbl-head-admin"></thead><tbody id="admin-rooms-table-body"></tbody></table></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_URL = window.location.origin;
+        let token = localStorage.getItem("access_token"), allRooms = [], currentUser = null, calendarInstance = null;
+        let currentLang = localStorage.getItem("app_lang") || "th", selectedRoomsFilter = new Set();
+
+        const i18n = {
+            th: {
+                login_title: "ระบบจองห้องประชุม", username: "รหัสพนักงาน (Username)", password: "รหัสผ่าน", btn_login: "เข้าสู่ระบบ", btn_register: "สมัครสมาชิกใหม่", btn_confirm_reg: "ยืนยันการสมัคร", btn_back_login: "กลับไปหน้าเข้าสู่ระบบ",
+                full_name: "ชื่อ-นามสกุล", department: "แผนก", plant: "สาขาโรงงาน",
+                app_title: "THAIXON: ระบบจัดการห้องประชุม (GTP)", menu_calendar: "มุมมองปฏิทิน", menu_new_booking: "สร้างการจองใหม่", menu_history: "ประวัติการจอง", menu_admin: "จัดการข้อมูลระบบ",
+                legend_mine: "การจองของคุณ", legend_others: "คิวจองผู้อื่น", filter_rooms: "แสดงเฉพาะห้อง", select_room: "เลือกห้องประชุม", purpose: "จุดประสงค์การประชุม", start_time: "เวลาเริ่มต้น", 
+                end_time: "เวลาสิ้นสุด", btn_confirm: "ยืนยันการจอง", tbl_room: "ห้อง", tbl_user_info: "ข้อมูลผู้จอง", tbl_purpose: "จุดประสงค์", tbl_status: "สถานะ", tbl_action: "จัดการ",
+                btn_logout: "ออกจากระบบ", btn_cancel: "ยกเลิก", admin_add_title: "เพิ่มห้องประชุม", admin_room_name: "ชื่อห้องประชุม (ระบุ)", admin_btn_save: "บันทึกห้องใหม่",
+                tbl_id: "ลำดับ", admin_status: "สถานะห้อง", admin_delete: "ลบ", room_active: "เปิดใช้งาน", room_inactive: "ปิดปรับปรุง", btn_toggle_off: "ปิด", btn_toggle_on: "เปิด",
+                status_booked: "จองสำเร็จ", status_cancelled: "ยกเลิกแล้ว", time_prefix: "เวลา "
+            },
+            en: {
+                login_title: "Meeting Room Portal", username: "Username", password: "Password", btn_login: "Sign In", btn_register: "Register Account", btn_confirm_reg: "Confirm Registration", btn_back_login: "Back to Login",
+                full_name: "Full Name", department: "Department", plant: "Plant",
+                app_title: "THAIXON: Room Management (GTP)", menu_calendar: "Calendar View", menu_new_booking: "New Booking", menu_history: "Booking History", menu_admin: "Data Management",
+                legend_mine: "Your Booking", legend_others: "Others", filter_rooms: "Filter Rooms", select_room: "Select Room", purpose: "Meeting Purpose", start_time: "Start Time", 
+                end_time: "End Time", btn_confirm: "Confirm Booking", tbl_room: "Room", tbl_user_info: "Booked By", tbl_purpose: "Purpose", tbl_status: "Status", tbl_action: "Action",
+                btn_logout: "Logout", btn_cancel: "Cancel", admin_add_title: "Add New Room", admin_room_name: "Room Name", admin_btn_save: "Save Room",
+                tbl_id: "ID", admin_status: "Status", admin_delete: "Delete", room_active: "Active", room_inactive: "Maintenance", btn_toggle_off: "Disable", btn_toggle_on: "Enable",
+                status_booked: "Booked", status_cancelled: "Cancelled", time_prefix: "Time "
+            },
+            zh: {
+                login_title: "會議室預訂系統", username: "用戶名稱", password: "密碼", btn_login: "登錄", btn_register: "註冊帳號", btn_confirm_reg: "確認註冊", btn_back_login: "返回登錄",
+                full_name: "姓名", department: "部門", plant: "廠區",
+                app_title: "THAIXON: 會議室管理門戶", menu_calendar: "預訂日曆", menu_new_booking: "新增會議預訂", menu_history: "我的預訂記錄", menu_admin: "主數據管理",
+                legend_mine: "我的預訂", legend_others: "他人已訂", filter_rooms: "過濾會議室", select_room: "選擇會議室", purpose: "會議目的", start_time: "開始時間", 
+                end_time: "結束時間", btn_confirm: "確認預訂", tbl_room: "會議室", tbl_user_info: "預訂人資訊", tbl_purpose: "目的", tbl_status: "狀態", tbl_action: "操作",
+                btn_logout: "登出", btn_cancel: "取消", admin_add_title: "新增會議室", admin_room_name: "會議室名稱", admin_btn_save: "保存數據",
+                tbl_id: "編號", admin_status: "房間狀態", admin_delete: "刪除", room_active: "可用", room_inactive: "維護中", btn_toggle_off: "暫停使用", btn_toggle_on: "啟用",
+                status_booked: "預訂成功", status_cancelled: "已取消", time_prefix: "時間 "
+            }
+        };
+
+        function changeLang(lang) {
+            currentLang = lang; localStorage.setItem("app_lang", lang);
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n'); if(i18n[lang][key]) {
+                    if (el.tagName.toLowerCase() === 'input' && el.type === 'text') { el.placeholder = i18n[lang][key]; }
+                    else { el.innerText = i18n[lang][key]; }
+                }
+            });
+            if(calendarInstance) calendarInstance.setOption('locale', lang === 'zh' ? 'zh-tw' : lang);
+            updateTableHeaders(); if(token) loadBookings(); loadRooms();
+        }
+
+        function updateTableHeaders() {
+            const h = i18n[currentLang];
+            document.getElementById('tbl-head-history').innerHTML = `<tr><th>${h.tbl_room}</th><th>${h.tbl_user_info}</th><th>${h.tbl_purpose}</th><th>${h.start_time}</th><th>${h.end_time}</th><th>${h.tbl_status}</th><th>${h.tbl_action}</th></tr>`;
+            document.getElementById('tbl-head-admin').innerHTML = `<tr><th>${h.tbl_id}</th><th>${h.tbl_room}</th><th>${h.admin_status}</th><th>${h.tbl_action}</th></tr>`;
+        }
+
+        function toggleRegisterView(isRegister) {
+            if(isRegister) {
+                document.getElementById('register-fields').classList.remove('d-none');
+                document.getElementById('login-buttons').classList.add('d-none');
+                document.getElementById('register-buttons').classList.remove('d-none');
+                document.getElementById('auth-title').innerText = i18n[currentLang].btn_register;
+            } else {
+                document.getElementById('register-fields').classList.add('d-none');
+                document.getElementById('login-buttons').classList.remove('d-none');
+                document.getElementById('register-buttons').classList.add('d-none');
+                document.getElementById('auth-title').innerText = i18n[currentLang].login_title;
+            }
+        }
+
+        window.onload = () => { changeLang(currentLang); if (token) showApp(); };
+        function switchView(viewName) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('#sidebar-wrapper .list-group-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${viewName}`).classList.add('active');
+            document.getElementById(`nav-${viewName}`).classList.add('active');
+            if(viewName === 'history' || viewName === 'admin') loadBookings();
+            if(viewName === 'calendar') { if(!calendarInstance) initCalendar(); else { calendarInstance.refetchEvents(); setTimeout(() => calendarInstance.render(), 100); } }
+        }
+        async function showApp() {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('main-wrapper').style.display = 'flex';
+            await fetchCurrentUser(); await loadRooms(); initCalendar(); loadBookings();
+        }
+        function logout() { localStorage.removeItem("access_token"); location.reload(); }
+
+        function formatAMPM(dateString) {
+            let date = new Date(dateString);
+            let hours = date.getHours();
+            let minutes = date.getMinutes().toString().padStart(2, '0');
+            let ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            return `${hours}:${minutes} ${ampm}`;
+        }
+
+        function initCalendar() {
+            calendarInstance = new FullCalendar.Calendar(document.getElementById('calendar'), {
+                initialView: 'timeGridDay', slotMinTime: '08:00:00', slotMaxTime: '20:00:00', allDaySlot: false, 
+                locale: currentLang === 'zh' ? 'zh-tw' : currentLang,
+                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
+                
+                // =======================================================
+                // ฟังก์ชันสำคัญที่เพิ่มเข้ามา: บังคับให้ปฏิทินแบบเดือนแสดงเป็น Block สีทึบ
+                // =======================================================
+                eventDisplay: 'block', 
+                displayEventTime: false, // ปิดเวลาแบบ Default เพื่อมาโชว์ในกล่องที่เราออกแบบเอง
+
+                events: async function(f, successCallback, failureCallback) {
+                    try {
+                        const res = await fetch(`${API_URL}/bookings`, { headers: { 'Authorization': `Bearer ${token}` }});
+                        const data = await res.json();
+                        const activeBookings = data.filter(b => selectedRoomsFilter.has(b.room_id) && b.status === "booked");
+                        
+                        successCallback(activeBookings.map(b => {
+                            const roomName = (allRooms.find(r => r.id === b.room_id) || {}).room_name || `Room ${b.room_id}`;
+                            const eventColor = b.user_id === currentUser.id ? '#059669' : '#475569';
+
+                            return {
+                                id: b.id, 
+                                start: b.start_time, 
+                                end: b.end_time, 
+                                backgroundColor: eventColor, 
+                                borderColor: 'transparent',
+                                extendedProps: { roomName: roomName, purpose: b.purpose, user: b.user }
+                            };
+                        }));
+                    } catch (e) { failureCallback(e); }
+                },
+                eventContent: function(arg) {
+                    let startTimeStr = formatAMPM(arg.event.start);
+                    let endTimeStr = formatAMPM(arg.event.end);
+                    let timePrefix = i18n[currentLang].time_prefix || "";
+                    
+                    let htmlStr = `
+                        <div class="custom-event-content">
+                            <div class="custom-event-time">${timePrefix}${startTimeStr} - ${endTimeStr}</div>
+                            <div class="custom-event-room">${arg.event.extendedProps.roomName}</div>
+                            <div class="custom-event-purpose">${arg.event.extendedProps.purpose}</div>
+                        </div>
+                    `;
+                    return { html: htmlStr };
+                },
+                eventClick: function(info) {
+                    const u = info.event.extendedProps.user;
+                    alert(`${i18n[currentLang].tbl_room}: ${info.event.extendedProps.roomName}\n${i18n[currentLang].purpose}: ${info.event.extendedProps.purpose}\n${i18n[currentLang].tbl_user_info}: ${u.full_name} (${u.department})`);
+                }
+            });
+            calendarInstance.render();
+        }
+
+        async function fetchCurrentUser() {
+            const res = await fetch(`${API_URL}/users/me`, { headers: { 'Authorization': `Bearer ${token}` }});
+            if (res.ok) {
+                currentUser = await res.json(); document.getElementById('user-display-name').innerText = currentUser.full_name || currentUser.username;
+                const b = document.getElementById('user-role-badge');
+                if(currentUser.role === 'admin') { b.innerText = "Admin"; b.className="badge bg-danger ms-1"; document.getElementById('nav-admin').classList.remove('d-none'); }
+                else { b.innerText = "User"; b.className="badge bg-secondary ms-1"; }
+            } else logout();
+        }
+
+        async function login() {
+            const fd = new URLSearchParams(); fd.append("username", document.getElementById('username').value); fd.append("password", document.getElementById('password').value);
+            const res = await fetch(`${API_URL}/login`, { method: 'POST', body: fd });
+            if (res.ok) { const d = await res.json(); localStorage.setItem("access_token", d.access_token); location.reload(); }
+            else showAlert('auth-alert', 'Invalid credentials', 'danger');
+        }
+
+        async function register() {
+            const payload = {
+                username: document.getElementById('username').value, password: document.getElementById('password').value,
+                full_name: document.getElementById('full-name').value, department: document.getElementById('department').value, plant: document.getElementById('plant').value
+            };
+            if(!payload.username || !payload.password || !payload.full_name || !payload.department) {
+                showAlert('auth-alert', 'กรุณากรอกข้อมูลให้ครบถ้วน', 'warning'); return;
+            }
+            const res = await fetch(`${API_URL}/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (res.ok) {
+                showAlert('auth-alert', 'Account created! Please Sign in.', 'success'); toggleRegisterView(false);
+            } else {
+                const e = await res.json(); showAlert('auth-alert', e.detail, 'danger');
+            }
+        }
+
+        async function loadRooms() {
+            const res = await fetch(`${API_URL}/rooms`, { headers: { 'Authorization': `Bearer ${token}` }});
+            if (res.ok) {
+                allRooms = await res.json(); const s = document.getElementById('room-select'); s.innerHTML = '';
+                const f = document.getElementById('room-filters'); f.innerHTML = '';
+                const a = document.getElementById('admin-rooms-table-body'); a.innerHTML = '';
+                selectedRoomsFilter.clear();
+                allRooms.forEach(r => {
+                    const statusText = r.is_active ? i18n[currentLang].room_active : i18n[currentLang].room_inactive;
+                    const badgeClass = r.is_active ? "bg-success" : "bg-warning text-dark";
+                    const toggleIcon = r.is_active ? "fa-ban" : "fa-check";
+                    const toggleText = r.is_active ? i18n[currentLang].btn_toggle_off : i18n[currentLang].btn_toggle_on;
+                    
+                    if (r.is_active) { s.innerHTML += `<option value="${r.id}">${r.room_name}</option>`; } 
+                    else { s.innerHTML += `<option value="${r.id}" disabled class="text-danger bg-light">${r.room_name} (${statusText})</option>`; }
+
+                    const filterLabel = r.is_active ? r.room_name : `<span class="text-danger">${r.room_name} <small>[${statusText}]</small></span>`;
+                    selectedRoomsFilter.add(r.id);
+                    f.innerHTML += `<div class='form-check mb-2'><input class='form-check-input room-filter-cb' type='checkbox' value='${r.id}' checked onchange='(function(cb){ if(cb.checked) selectedRoomsFilter.add(parseInt(cb.value)); else selectedRoomsFilter.delete(parseInt(cb.value)); calendarInstance.refetchEvents(); })(this)'><label class='form-check-label'>${filterLabel}</label></div>`;
+                    
+                    a.innerHTML += `<tr><td>${r.id}</td><td class='fw-bold'>${r.room_name}</td><td><span class='badge ${badgeClass}'>${statusText}</span></td><td><button class='btn btn-sm btn-outline-secondary me-2' onclick='toggleRoomStatus(${r.id})'><i class="fas ${toggleIcon}"></i> ${toggleText}</button><button class='btn btn-sm btn-outline-danger' onclick='removeRoom(${r.id})'><i class="fas fa-trash"></i> ${i18n[currentLang].admin_delete}</button></td></tr>`;
+                });
+            }
+        }
+
+        async function toggleRoomStatus(roomId) {
+            const res = await fetch(`${API_URL}/rooms/${roomId}/toggle`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
+            if (res.ok) { loadRooms(); }
+        }
+
+        async function addRoom() {
+            const res = await fetch(`${API_URL}/rooms`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ room_name: document.getElementById('new-room-name').value }) });
+            if (res.ok) { document.getElementById('new-room-name').value = ''; loadRooms(); showAlert('alert-box', 'Room Added Successfully', 'success'); }
+        }
+        async function removeRoom(id) { if(confirm("Confirm deletion?")) { await fetch(`${API_URL}/rooms/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }); loadRooms(); } }
+
+        async function loadBookings() {
+            const res = await fetch(`${API_URL}/bookings`, { headers: { 'Authorization': `Bearer ${token}` }});
+            if (res.ok) {
+                const data = await res.json(); const tbody = document.getElementById('bookings-table-body'); tbody.innerHTML = '';
+                const display = currentUser.role === 'admin' ? data : data.filter(b => b.user_id === currentUser.id);
+                
+                display.sort((a, b) => b.id - a.id); 
+
+                display.forEach(b => {
+                    const roomName = (allRooms.find(r => r.id === b.room_id) || {}).room_name || b.room_id;
+                    let statusBadge = "", actionBtn = "";
+                    
+                    if (b.status === "booked") {
+                        statusBadge = `<span class='badge bg-success'>${i18n[currentLang].status_booked}</span>`;
+                        actionBtn = `<button class='btn btn-sm btn-outline-danger' onclick='deleteBooking(${b.id})'>${i18n[currentLang].btn_cancel}</button>`;
+                    } else {
+                        statusBadge = `<span class='badge bg-secondary'>${i18n[currentLang].status_cancelled}</span>`;
+                        actionBtn = `<span class="text-muted small">-</span>`;
+                    }
+
+                    const userInfoHtml = `<div class="fw-bold text-dark">${b.user.full_name}</div><div class="small text-muted" style="font-size: 0.75rem;"><i class="fas fa-building me-1"></i>${b.user.department} | ${b.user.plant}</div>`;
+
+                    tbody.innerHTML += `<tr><td class='fw-bold'>${roomName}</td><td>${userInfoHtml}</td><td>${b.purpose}</td><td>${new Date(b.start_time).toLocaleString(currentLang === 'th' ? 'th-TH' : 'en-GB')}</td><td>${new Date(b.end_time).toLocaleString(currentLang === 'th' ? 'th-TH' : 'en-GB')}</td><td>${statusBadge}</td><td>${actionBtn}</td></tr>`;
+                });
+            }
+        }
+
+        async function bookRoom() {
+            const res = await fetch(`${API_URL}/bookings`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ room_id: parseInt(document.getElementById('room-select').value), purpose: document.getElementById('booking-purpose').value, start_time: document.getElementById('start-time').value, end_time: document.getElementById('end-time').value }) });
+            if (res.ok) { showAlert('alert-box', 'Booking Successful!', 'success'); document.getElementById('booking-purpose').value = ''; document.getElementById('start-time').value = ''; document.getElementById('end-time').value = ''; if(calendarInstance) calendarInstance.refetchEvents(); loadBookings(); }
+            else { const e = await res.json(); showAlert('alert-box', e.detail, 'danger'); }
+        }
+        async function deleteBooking(id) { if(confirm(i18n[currentLang].confirm_cancel || "Cancel?")) { await fetch(`${API_URL}/bookings/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }); calendarInstance.refetchEvents(); loadBookings(); } }
+
+        function showAlert(id, m, t) { const b = document.getElementById(id); b.className = `alert alert-${t} fade show mb-3`; b.innerText = m; b.classList.remove('d-none'); setTimeout(() => b.classList.add('d-none'), 3000); window.scrollTo(0,0); }
+    </script>
+</body>
+</html>
