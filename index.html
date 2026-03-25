@@ -397,17 +397,39 @@
 
         async function register() {
             const payload = {
-                username: document.getElementById('username').value, password: document.getElementById('password').value,
-                full_name: document.getElementById('full-name').value, department: document.getElementById('department').value, plant: document.getElementById('plant').value
+                username: document.getElementById('username').value, 
+                password: document.getElementById('password').value,
+                full_name: document.getElementById('full-name').value, 
+                department: document.getElementById('department').value, 
+                plant: document.getElementById('plant').value
             };
+            
             if(!payload.username || !payload.password || !payload.full_name || !payload.department) {
-                showAlert('auth-alert', 'กรุณากรอกข้อมูลให้ครบถ้วน', 'warning'); return;
+                showAlert('auth-alert', currentLang === 'th' ? 'กรุณากรอกข้อมูลให้ครบถ้วน' : 'Please fill all fields', 'warning'); 
+                return;
             }
-            const res = await fetch(`${API_URL}/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            
+            const res = await fetch(`${API_URL}/register`, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify(payload) 
+            });
+            
             if (res.ok) {
-                showAlert('auth-alert', 'Account created! Please Sign in.', 'success'); toggleRegisterView(false);
+                // 1. โชว์ข้อความแจ้งเตือนสีเขียวตามภาษาที่เลือก
+                const successMsg = currentLang === 'th' ? 'สมัครสมาชิกเรียบร้อยแล้ว! เข้าสู่ระบบได้เลยค่ะ' : 'Registration successful! You can now log in.';
+                showAlert('auth-alert', successMsg, 'success'); 
+                
+                // 2. เคลียร์ช่องรหัสผ่านและข้อมูลส่วนตัว (เหลือ Username ไว้ให้กดล็อกอินง่ายๆ)
+                document.getElementById('password').value = '';
+                document.getElementById('full-name').value = '';
+                document.getElementById('department').value = '';
+                
+                // 3. สลับหน้าเว็บกลับไปที่โหมดเข้าสู่ระบบโดยอัตโนมัติ
+                toggleRegisterView(false);
             } else {
-                const e = await res.json(); showAlert('auth-alert', e.detail, 'danger');
+                const e = await res.json(); 
+                showAlert('auth-alert', e.detail, 'danger');
             }
         }
 
